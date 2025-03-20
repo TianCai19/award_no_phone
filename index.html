@@ -62,6 +62,27 @@
             margin-top: 20px;
             text-align: center;
         }
+
+        #message-log {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .message {
+            padding: 5px 0;
+            color: #666;
+            font-size: 0.9em;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .message:first-child {
+            color: #333;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -76,6 +97,7 @@
         <p class="warning" id="warning" style="display: none;">
             检测到互动，修为正在倒退！
         </p>
+        <div id="message-log"></div>
     </div>
     <script src="game.js"></script>
 </body>
