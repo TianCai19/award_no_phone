@@ -131,10 +131,31 @@ class Game {
         }
     }
 
+    calculateTimeToNext() {
+        const currentRealm = this.realms[this.realmIndex];
+        const progressNeeded = 100 - this.progress;
+        const timePerProgress = 0.1; // 100ms per progress update
+        let estimatedSeconds = (progressNeeded / currentRealm.speed) * timePerProgress;
+
+        // Calculate total time to next realm
+        if (this.realmIndex < this.realms.length - 1) {
+            const remainingLevelsInRealm = currentRealm.maxLevel - this.level;
+            const totalSecondsToNextRealm = ((remainingLevelsInRealm * 100) / currentRealm.speed) * timePerProgress + estimatedSeconds;
+
+            if (this.level === currentRealm.maxLevel) {
+                return `距离${this.realms[this.realmIndex + 1].name}还需 ${Math.ceil(estimatedSeconds)}秒`;
+            } else {
+                return `距离下一等级还需 ${Math.ceil(estimatedSeconds)}秒 (到${this.realms[this.realmIndex + 1].name}还需 ${Math.ceil(totalSecondsToNextRealm)}秒)`;
+            }
+        } else {
+            return `距离下一等级还需 ${Math.ceil(estimatedSeconds)}秒`;
+        }
+    }
+
     updateUI() {
         const currentRealm = this.realms[this.realmIndex];
         this.elements.realm.textContent = currentRealm.name;
-        this.elements.levelInfo.textContent = `等级: ${this.level}`;
+        this.elements.levelInfo.textContent = `等级: ${this.level} (${this.calculateTimeToNext()})`;
         this.elements.progress.style.width = `${this.progress}%`;
     }
 }
