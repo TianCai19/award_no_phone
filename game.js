@@ -1,18 +1,20 @@
+import themes from './themes.js';
+
 class Game {
-    constructor() {
+    constructor(themeKey = 'cultivation') {
         this.level = 1;
         this.progress = 0;
         this.isRegressing = false;
         this.realmIndex = 0;
-        this.realms = [
-            { name: '凡人境界', maxLevel: 10, speed: 1 },
-            { name: '练气境界', maxLevel: 20, speed: 1.5 },
-            { name: '筑基境界', maxLevel: 30, speed: 2 },
-            { name: '金丹境界', maxLevel: 40, speed: 2.5 },
-            { name: '元婴境界', maxLevel: 50, speed: 3 },
-            { name: '化神境界', maxLevel: 60, speed: 3.5 },
-            { name: '大乘境界', maxLevel: 100, speed: 4 }
-        ];
+        this.currentThemeKey = themeKey;
+        this.theme = themes[themeKey];
+        this.realms = this.theme.realms;
+        
+        // 设置主题选择器的初始值
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            themeSelect.value = themeKey;
+        }
 
         this.elements = {
             realm: document.getElementById('realm'),
@@ -22,22 +24,7 @@ class Game {
             messageLog: document.getElementById('message-log')
         };
 
-        this.cultivationEvents = {
-            success: [
-                '突破瓶颈，感悟天地大道！',
-                '福缘际会，修为大进！',
-                '天降机缘，修为精进！',
-                '悟得真谛，境界提升！',
-                '功法圆满，突破在即！'
-            ],
-            failure: [
-                '心魔作祟，道心不稳！',
-                '走火入魔，修为倒退！',
-                '遭遇心魔，金丹破碎！',
-                '分心他顾，道基不稳！',
-                '意志不坚，功亏一篑！'
-            ]
-        };
+        document.title = this.theme.name;
 
         this.setupEventListeners();
         this.startCultivation();
@@ -54,12 +41,23 @@ class Game {
                 this.handleInteraction();
             }
         });
+        
+        // 主题切换监听
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            themeSelect.addEventListener('change', (e) => {
+                // 防止点击下拉菜单触发handleInteraction
+                e.stopPropagation();
+                this.changeTheme(e.target.value);
+            });
+        }
     }
 
     handleInteraction() {
         if (!this.isRegressing) {
             this.isRegressing = true;
             this.elements.warning.style.display = 'block';
+            this.elements.warning.textContent = this.theme.events.warning;
             this.addMessage(this.getRandomEvent('failure'));
             this.startRegression();
         }
@@ -77,7 +75,7 @@ class Game {
     }
 
     getRandomEvent(type) {
-        const events = this.cultivationEvents[type];
+        const events = this.theme.events[type];
         return events[Math.floor(Math.random() * events.length)];
     }
 
@@ -125,7 +123,7 @@ class Game {
         if (this.level > currentRealm.maxLevel && this.realmIndex < this.realms.length - 1) {
             this.realmIndex++;
             this.level = 1;
-            this.addMessage(`突破成功，进入${this.realms[this.realmIndex].name}！`);
+            this.addMessage(this.theme.events.breakthrough.replace('{realm}', this.realms[this.realmIndex].name));
         } else {
             this.addMessage(this.getRandomEvent('success'));
         }
@@ -143,12 +141,14 @@ class Game {
             const totalSecondsToNextRealm = ((remainingLevelsInRealm * 100) / currentRealm.speed) * timePerProgress + estimatedSeconds;
 
             if (this.level === currentRealm.maxLevel) {
-                return `距离${this.realms[this.realmIndex + 1].name}还需 ${Math.ceil(estimatedSeconds)}秒`;
+                return this.theme.events.timeToNextRealm
+                .replace('{realm}', this.realms[this.realmIndex + 1].name)
+                .replace('{seconds}', Math.ceil(estimatedSeconds));
             } else {
                 return `距离下一等级还需 ${Math.ceil(estimatedSeconds)}秒 (到${this.realms[this.realmIndex + 1].name}还需 ${Math.ceil(totalSecondsToNextRealm)}秒)`;
             }
         } else {
-            return `距离下一等级还需 ${Math.ceil(estimatedSeconds)}秒`;
+            return this.theme.events.timeToNext.replace('{seconds}', Math.ceil(estimatedSeconds));
         }
     }
 
@@ -157,6 +157,37 @@ class Game {
         this.elements.realm.textContent = currentRealm.name;
         this.elements.levelInfo.textContent = `等级: ${this.level} (${this.calculateTimeToNext()})`;
         this.elements.progress.style.width = `${this.progress}%`;
+    }
+    
+    changeTheme(themeKey) {
+        if (themes[themeKey] && themeKey !== this.currentThemeKey) {
+            // 保存当前主题键值以便后续比较
+            this.currentThemeKey = themeKey;
+            
+            // 更新主题
+            this.theme = themes[themeKey];
+            this.realms = this.theme.realms;
+            
+            // 重置游戏状态
+            this.level = 1;
+            this.progress = 0;
+            this.realmIndex = 0;
+            this.isRegressing = false;
+            
+            // 更新UI元素
+            document.title = this.theme.name;
+            this.elements.warning.style.display = 'none';
+            this.elements.warning.textContent = this.theme.events.warning;
+            
+            // 清空消息日志
+            this.elements.messageLog.innerHTML = '';
+            
+            // 添加主题切换消息
+            this.addMessage(`切换到${this.theme.name}主题`);
+            
+            // 更新UI
+            this.updateUI();
+        }
     }
 }
 
