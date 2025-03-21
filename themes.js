@@ -94,6 +94,70 @@ const themes = {
             timeToNext: '距离下次提升还需 {seconds}秒',
             timeToNextRealm: '距离成为{realm}还需 {seconds}秒'
         }
+    },
+    entrepreneurship: {
+        name: '创业模拟器',
+        realms: [
+            { name: '创业小白', maxLevel: 10, speed: 1 },
+            { name: '小微企业', maxLevel: 20, speed: 1.5 },
+            { name: '初创公司', maxLevel: 30, speed: 2 },
+            { name: '成长企业', maxLevel: 40, speed: 2.5 },
+            { name: '行业翘楚', maxLevel: 50, speed: 3 },
+            { name: '独角兽', maxLevel: 60, speed: 3.5 },
+            { name: '商业帝国', maxLevel: 100, speed: 4 }
+        ],
+        events: {
+            success: [
+                '商业洞察，发现市场机会！',
+                '成功融资，资金充裕！',
+                '产品大卖，用户激增！',
+                '团队扩张，人才加入！',
+                '战略调整，业绩飙升！'
+            ],
+            failure: [
+                '资金链断裂，危机四伏！',
+                '产品滞销，用户流失！',
+                '团队矛盾，人才流失！',
+                '决策失误，错失良机！',
+                '竞争加剧，市场份额下滑！'
+            ],
+            breakthrough: '恭喜！企业晋升为{realm}！',
+            warning: '分心被发现，创业进度下滑！',
+            timeToNext: '距离下次晋升还需 {seconds}秒',
+            timeToNextRealm: '距离成为{realm}还需 {seconds}秒'
+        }
+    },
+    emperor: {
+        name: '皇帝养成记',
+        realms: [
+            { name: '平民', maxLevel: 10, speed: 1 },
+            { name: '贵族', maxLevel: 20, speed: 1.5 },
+            { name: '王子', maxLevel: 30, speed: 2 },
+            { name: '亲王', maxLevel: 40, speed: 2.5 },
+            { name: '新帝', maxLevel: 50, speed: 3 },
+            { name: '明君', maxLevel: 60, speed: 3.5 },
+            { name: '千古一帝', maxLevel: 100, speed: 4 }
+        ],
+        events: {
+            success: [
+                '圣旨一出，天下景从！',
+                '政通人和，国泰民安！',
+                '招贤纳士，人才济济！',
+                '励精图治，国力增强！',
+                '明察秋毫，奸佞伏诛！'
+            ],
+            failure: [
+                '朝堂争斗，内耗严重！',
+                '贪官横行，民怨四起！',
+                '决策失误，国库空虚！',
+                '边境动荡，战事频发！',
+                '昏庸无道，民心尽失！'
+            ],
+            breakthrough: '恭喜！你已晋升为{realm}！',
+            warning: '懈怠被发现，帝王威严下降！',
+            timeToNext: '距离下次晋升还需 {seconds}秒',
+            timeToNextRealm: '距离成为{realm}还需 {seconds}秒'
+        }
     }
 };
 
