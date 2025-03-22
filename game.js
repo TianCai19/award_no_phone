@@ -4,6 +4,9 @@ class Game {
         this.progress = 0;
         this.isRegressing = false;
         this.realmIndex = 0;
+        this.startTime = Date.now();
+        this.gameInterval = null;
+        this.isGameFinished = false;
         this.realms = [
             { name: '凡人境界', maxLevel: 10, speed: 1 },
             { name: '练气境界', maxLevel: 20, speed: 1.5 },
@@ -11,7 +14,7 @@ class Game {
             { name: '金丹境界', maxLevel: 40, speed: 2.5 },
             { name: '元婴境界', maxLevel: 50, speed: 3 },
             { name: '化神境界', maxLevel: 60, speed: 3.5 },
-            { name: '大乘境界', maxLevel: 100, speed: 4 }
+            { name: '大乘境界', maxLevel: 70, speed: 4 }
         ];
 
         this.elements = {
@@ -82,8 +85,8 @@ class Game {
     }
 
     startCultivation() {
-        setInterval(() => {
-            if (!this.isRegressing) {
+        this.gameInterval = setInterval(() => {
+            if (!this.isRegressing && !this.isGameFinished) {
                 this.progress += this.realms[this.realmIndex].speed;
                 if (this.progress >= 100) {
                     this.levelUp();
@@ -126,6 +129,8 @@ class Game {
             this.realmIndex++;
             this.level = 1;
             this.addMessage(`突破成功，进入${this.realms[this.realmIndex].name}！`);
+        } else if (this.realmIndex === this.realms.length - 1 && this.level >= currentRealm.maxLevel) {
+            this.finishGame();
         } else {
             this.addMessage(this.getRandomEvent('success'));
         }
@@ -157,6 +162,41 @@ class Game {
         this.elements.realm.textContent = currentRealm.name;
         this.elements.levelInfo.textContent = `等级: ${this.level} (${this.calculateTimeToNext()})`;
         this.elements.progress.style.width = `${this.progress}%`;
+    }
+
+    finishGame() {
+        this.isGameFinished = true;
+        clearInterval(this.gameInterval);
+        const totalTime = Math.floor((Date.now() - this.startTime) / 1000);
+        const hours = Math.floor(totalTime / 3600);
+        const minutes = Math.floor((totalTime % 3600) / 60);
+        const seconds = totalTime % 60;
+        const timeString = `${hours}小时${minutes}分${seconds}秒`;
+
+        const endingMessage = [
+            '恭喜你，终于修炼到了大乘境界巅峰！',
+            '历经无数磨难，你终于踏上了修仙之路的巅峰。',
+            '回首往事，曾经的凡人境界恍如昨日，而今已是举手投足间便可移山倒海。',
+            '天地之力尽在掌握，举手投足间可达万里，一念之间可洞察天机。',
+            '而这一切，正是源于你那永不放弃的道心，和对大道的不懈追求。',
+            `在这漫长的修炼过程中，你总共花费了${timeString}。`,
+            '愿你带着这份坚持之心，在现实中也能达到人生的巅峰！'
+        ].join('\n\n');
+
+        this.elements.warning.style.display = 'none';
+        this.elements.messageLog.innerHTML = '';
+        const finalMessage = document.createElement('div');
+        finalMessage.className = 'message final-message';
+        finalMessage.style.whiteSpace = 'pre-wrap';
+        finalMessage.style.fontSize = '1.2em';
+        finalMessage.style.color = '#4CAF50';
+        finalMessage.style.padding = '20px';
+        finalMessage.style.border = '2px solid #4CAF50';
+        finalMessage.style.borderRadius = '10px';
+        finalMessage.style.margin = '20px 0';
+        finalMessage.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
+        finalMessage.textContent = endingMessage;
+        this.elements.messageLog.appendChild(finalMessage);
     }
 }
 
