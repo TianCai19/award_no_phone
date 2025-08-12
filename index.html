@@ -12,6 +12,10 @@
             background: #f0f0f0;
             color: #333;
             user-select: none;
+            /* 便于背景图适配 */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
         #game-container {
@@ -43,6 +47,16 @@
             padding: 10px;
             background: #e8f5e9;
             border-radius: 5px;
+        }
+
+        /* 新增：境界徽章 */
+        #realm-badge {
+            display: none;
+            width: 96px;
+            height: 96px;
+            object-fit: contain;
+            margin: 0 auto 8px;
+            image-rendering: auto;
         }
 
         #level-info {
@@ -112,6 +126,8 @@
             </select>
         </div>
         <div id="status">
+            <!-- 新增：境界徽章占位 -->
+            <img id="realm-badge" alt="境界徽章" />
             <div id="realm">凡人境界</div>
             <div id="level-info">等级: 1</div>
         </div>
@@ -124,9 +140,9 @@
         <div id="message-log"></div>
     </div>
     <script src="game.js" type="module"></script>
-    <script type="module">
-        import { Analytics } from '@vercel/analytics/react';
-        Analytics();
-    </script>
+    <!-- 测试图片：将以下文件放入对应目录即可看到效果
+         - assets/backgrounds/cultivation.png （背景）
+         - assets/realms/cultivation/01-mortal.png （凡人境界徽章）
+    -->
 </body>
 </html>
