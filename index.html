@@ -111,6 +111,76 @@
             color: #333;
             font-weight: bold;
         }
+
+        /* 新增：连击/倍率样式 */
+        #streak-info {
+            font-size: 0.95em;
+            color: #666;
+            margin-top: 4px;
+        }
+        #streak-info .boost {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+        #streak-info .debuff {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .progress-label {
+            margin-top: 8px;
+            margin-bottom: 6px;
+            font-size: 0.95em;
+            color: #666;
+        }
+        /* 到下一个境界的整体进度条 */
+        #realm-progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        #realm-progress {
+            width: 0%;
+            height: 100%;
+            background: #2196F3;
+            transition: width 0.5s ease;
+        }
+
+        /* 分段等级进度（显示当前境界内的所有等级块） */
+        .level-steps-label {
+            margin-top: 10px;
+            font-size: 0.95em;
+            color: #666;
+        }
+        #level-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .level-step {
+            height: 10px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .level-step .fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #66BB6A);
+            transition: width 0.3s ease;
+        }
+        .level-step.completed .fill { width: 100%; }
+        .level-step.current { outline: 1px solid #66BB6A; }
+
+        #focus-stats {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -130,10 +200,24 @@
             <img id="realm-badge" alt="境界徽章" />
             <div id="realm">凡人境界</div>
             <div id="level-info">等级: 1</div>
+            <!-- 新增：专注连击与倍率显示 -->
+            <div id="streak-info">专注 0 秒 · 倍率 x1.0</div>
+            <!-- 新增：专注时间统计（累计与历史最长） -->
+            <div id="focus-stats">累计 0秒 · 最长 0秒</div>
         </div>
+        <!-- 新增：当前等级内修为进度标签 -->
+        <div class="progress-label">修为进度</div>
         <div id="progress-bar">
             <div id="progress"></div>
         </div>
+        <!-- 修改：在“到下一个境界”处显示具体境界名 -->
+        <div class="progress-label">境界进度（到 <span id="realm-next-name">—</span>） <span id="realm-eta" style="margin-left:6px; color:#333;"></span></div>
+        <div id="realm-progress-bar">
+            <div id="realm-progress"></div>
+        </div>
+        <!-- 新增：显示当前境界内所有等级的分段进度条 -->
+        <div class="level-steps-label">当前境界等级分段 <span id="level-steps-label"></span></div>
+        <div id="level-steps"></div>
         <p class="warning" id="warning" style="display: none;">
             检测到互动，修为正在倒退！
         </p>
