@@ -85,12 +85,18 @@ class Game {
 
         this.cumulativeFocus = 0; // 累计专注秒数（会随时间增长，不因回退清零）
         this.bestFocus = 0;       // 历史最长专注秒数
+        this.unsavedSeconds = 0;  // 未保存到数据库的秒数
+        this.saveInterval = 60;   // 每60秒自动保存一次到数据库
+        this.dbInitialized = false; // 数据库是否已初始化
         // 可选：从 localStorage 恢复
         try {
             const saved = JSON.parse(localStorage.getItem('focus_stats') || '{}');
             if (typeof saved.cumulativeFocus === 'number') this.cumulativeFocus = saved.cumulativeFocus;
             if (typeof saved.bestFocus === 'number') this.bestFocus = saved.bestFocus;
         } catch {}
+
+        // 初始化数据库并加载历史记录
+        this.initDatabase();
 
         this.elements = {
             realm: document.getElementById('realm'),
@@ -107,7 +113,10 @@ class Game {
             levelStepsContainer: document.getElementById('level-steps'),
             levelStepsLabel: document.getElementById('level-steps-label'),
             realmNextName: document.getElementById('realm-next-name'),
-            focusStats: document.getElementById('focus-stats')
+            focusStats: document.getElementById('focus-stats'),
+            historySection: document.getElementById('history-section'),
+            historyList: document.getElementById('history-list'),
+            allTimeStats: document.getElementById('all-time-stats')
         };
 
         // 新增：徽章图片加载/失败处理（不存在时自动隐藏）
@@ -136,7 +145,14 @@ class Game {
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.handleInteraction();
+                // 页面隐藏时保存学习时间
+                this.saveStudyTime();
             }
+        });
+
+        // 页面关闭前保存学习时间
+        window.addEventListener('beforeunload', () => {
+            this.saveStudyTime();
         });
         
         // 主题切换监听
@@ -192,6 +208,7 @@ class Game {
         if (!this.isRegressing) {
             this.streakSeconds += 1;
             this.cumulativeFocus += 1; // 累计专注 +1s
+            this.unsavedSeconds += 1;  // 累计未保存秒数
             if (this.streakSeconds > this.bestFocus) {
                 this.bestFocus = this.streakSeconds;
             }
@@ -200,6 +217,11 @@ class Game {
             this.progressBoost = 1 + (this.maxBoost - 1) * t;
             // 偶发趣味事件
             this.rollRandomIdleEvent();
+
+            // 每隔 saveInterval 秒自动保存到数据库
+            if (this.unsavedSeconds >= this.saveInterval) {
+                this.saveStudyTime();
+            }
         } else {
             // 回退中降低倍率并清空连击时长
             this.streakSeconds = 0;
@@ -584,6 +606,110 @@ class Game {
             return r ? `${m}分${r}秒` : `${m}分`;
         };
         this.elements.focusStats.textContent = `累计 ${fmt(this.cumulativeFocus)} · 最长 ${fmt(this.bestFocus)}`;
+    }
+
+    // 数据库相关方法
+    async initDatabase() {
+        try {
+            const response = await fetch('/api/db-init');
+            const result = await response.json();
+            if (result.success) {
+                this.dbInitialized = true;
+                this.loadStudyHistory();
+            }
+        } catch (error) {
+            console.warn('数据库初始化失败，使用本地存储:', error);
+        }
+    }
+
+    async saveStudyTime() {
+        if (!this.dbInitialized || this.unsavedSeconds === 0) return;
+
+        const today = new Date().toISOString().split('T')[0];
+        const secondsToSave = this.unsavedSeconds;
+        this.unsavedSeconds = 0;
+
+        try {
+            const response = await fetch('/api/study-records', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    date: today,
+                    seconds: secondsToSave,
+                    best_streak: this.bestFocus
+                })
+            });
+            const result = await response.json();
+            if (result.success) {
+                this.loadStudyHistory();
+            }
+        } catch (error) {
+            console.warn('保存学习时间失败:', error);
+            this.unsavedSeconds += secondsToSave;
+        }
+    }
+
+    async loadStudyHistory() {
+        if (!this.elements.historyList) return;
+
+        try {
+            const response = await fetch('/api/study-records?range=week');
+            const result = await response.json();
+
+            if (result.success) {
+                this.renderHistoryUI(result.data, result.summary);
+            }
+        } catch (error) {
+            console.warn('加载历史记录失败:', error);
+        }
+    }
+
+    renderHistoryUI(records, summary) {
+        if (!this.elements.historyList) return;
+
+        const formatTime = (seconds) => {
+            if (seconds < 60) return `${seconds}秒`;
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            if (hours > 0) {
+                return mins > 0 ? `${hours}小时${mins}分` : `${hours}小时`;
+            }
+            return secs > 0 ? `${mins}分${secs}秒` : `${mins}分`;
+        };
+
+        const formatDate = (dateStr) => {
+            const date = new Date(dateStr);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (dateStr === today.toISOString().split('T')[0]) return '今天';
+            if (dateStr === yesterday.toISOString().split('T')[0]) return '昨天';
+            return `${date.getMonth() + 1}月${date.getDate()}日`;
+        };
+
+        // Render history list
+        if (records.length === 0) {
+            this.elements.historyList.innerHTML = '<div class="no-history">暂无记录，开始专注吧！</div>';
+        } else {
+            this.elements.historyList.innerHTML = records.map(r => `
+                <div class="history-item">
+                    <span class="history-date">${formatDate(r.date)}</span>
+                    <span class="history-time">${formatTime(r.total_seconds)}</span>
+                    <span class="history-sessions">${r.sessions_count}次</span>
+                </div>
+            `).join('');
+        }
+
+        // Render all-time stats
+        if (this.elements.allTimeStats && summary) {
+            this.elements.allTimeStats.innerHTML = `
+                总计 ${formatTime(summary.all_time_seconds)} ·
+                最长连续 ${formatTime(summary.best_streak_ever)} ·
+                共 ${summary.days_practiced} 天
+            `;
+        }
     }
 
     changeTheme(themeKey) {

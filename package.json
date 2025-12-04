@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@netlify/neon": "^0.1.0",
     "@vercel/analytics": "^1.5.0"
   }
 }
